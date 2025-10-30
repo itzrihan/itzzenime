@@ -15,9 +15,24 @@ function Servers({
   setActiveServerId,
   serverLoading,
 }) {
-  const subServers = servers?.filter((server) => server.type === "sub") || [];
-  const dubServers = servers?.filter((server) => server.type === "dub") || [];
-  const rawServers = servers?.filter((server) => server.type === "raw") || [];
+  // Sort function to put HD-2 before HD-1
+  const sortByHdPreference = (a, b) => {
+    if (a.serverName?.includes("HD-2") && b.serverName?.includes("HD-1"))
+      return -1;
+    if (a.serverName?.includes("HD-1") && b.serverName?.includes("HD-2"))
+      return 1;
+    return 0;
+  };
+
+  const subServers =
+    servers?.filter((server) => server.type === "sub").sort(sortByHdPreference) ||
+    [];
+  const dubServers =
+    servers?.filter((server) => server.type === "dub").sort(sortByHdPreference) ||
+    [];
+  const rawServers =
+    servers?.filter((server) => server.type === "raw").sort(sortByHdPreference) ||
+    [];
 
   useEffect(() => {
     const savedServerName = localStorage.getItem("server_name");
@@ -35,13 +50,14 @@ function Servers({
     } else if (servers && servers.length > 0) {
       setActiveServerId(servers[0].data_id);
     }
-  }, [servers]);
+  }, [servers, setActiveServerId]);
 
   const handleServerSelect = (server) => {
     setActiveServerId(server.data_id);
     localStorage.setItem("server_name", server.serverName);
     localStorage.setItem("server_type", server.type);
   };
+
   return (
     <div className="relative bg-[#11101A] p-4 w-full min-h-[100px] flex justify-center items-center max-[1200px]:bg-[#14151A]">
       {serverLoading ? (
