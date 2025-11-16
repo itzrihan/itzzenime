@@ -1,3 +1,3 @@
-const website_name = "Anitummy";
+const website_name = "AFABRA";
 
 export default website_name;
