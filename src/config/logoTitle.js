@@ -1,3 +1,3 @@
-const logoTitle="An!tummy"
+const logoTitle="AFABRA"
 
 export default logoTitle;
