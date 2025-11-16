@@ -15,7 +15,7 @@ function Servers({
   setActiveServerId,
   serverLoading,
 }) {
-  // Custom sort function: HD-1 first, then Fast, then HD-2
+  // Custom sort function: HD-1 first, then Fast, then HD-2, HD-3 etc.
   const sortByHdPreference = (a, b) => {
     const order = ["HD-1", "Fast", "HD-2", "HD-3"];
     const aIndex = order.findIndex((o) => a.serverName?.includes(o));
@@ -37,9 +37,6 @@ function Servers({
   useEffect(() => {
     const savedServerName = localStorage.getItem("server_name");
 
-    // Sort all servers by preference HD-1 > Fast > HD-2
-    const sortedAll = servers ? [...servers].sort(sortByHdPreference) : [];
-
     if (savedServerName && servers) {
       const matchingServer = servers.find(
         (server) => server.serverName === savedServerName
@@ -51,8 +48,19 @@ function Servers({
       }
     }
 
-    // Default: use the first sorted server (HD-1)
-    if (sortedAll.length > 0) {
+    if (servers && servers.length > 0) {
+      // Step 1: try to find Server 2
+      const server2 = servers.find((server) =>
+        server.serverName?.includes("Server 2")
+      );
+
+      if (server2) {
+        setActiveServerId(server2.data_id);
+        return;
+      }
+
+      // Step 2: fallback to first sorted server (HD-1 first)
+      const sortedAll = [...servers].sort(sortByHdPreference);
       setActiveServerId(sortedAll[0].data_id);
     }
   }, [servers, setActiveServerId]);
