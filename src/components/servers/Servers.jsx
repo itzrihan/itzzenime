@@ -15,15 +15,15 @@ function Servers({
   setActiveServerId,
   serverLoading,
 }) {
-  // Sort function to put HD-2 before HD-1
+  // Custom sort function: HD-1 first, then Fast, then HD-2
   const sortByHdPreference = (a, b) => {
-    if (a.serverName?.includes("HD-2") && b.serverName?.includes("HD-1"))
-      return -1;
-    if (a.serverName?.includes("HD-1") && b.serverName?.includes("HD-2"))
-      return 1;
-    return 0;
+    const order = ["HD-1", "Fast", "HD-2", "HD-3"];
+    const aIndex = order.findIndex((o) => a.serverName?.includes(o));
+    const bIndex = order.findIndex((o) => b.serverName?.includes(o));
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
   };
 
+  // Filter and sort servers by type
   const subServers =
     servers?.filter((server) => server.type === "sub").sort(sortByHdPreference) ||
     [];
@@ -37,18 +37,23 @@ function Servers({
   useEffect(() => {
     const savedServerName = localStorage.getItem("server_name");
 
-    if (savedServerName) {
-      const matchingServer = servers?.find(
+    // Sort all servers by preference HD-1 > Fast > HD-2
+    const sortedAll = servers ? [...servers].sort(sortByHdPreference) : [];
+
+    if (savedServerName && servers) {
+      const matchingServer = servers.find(
         (server) => server.serverName === savedServerName
       );
 
       if (matchingServer) {
         setActiveServerId(matchingServer.data_id);
-      } else if (servers && servers.length > 0) {
-        setActiveServerId(servers[0].data_id);
+        return;
       }
-    } else if (servers && servers.length > 0) {
-      setActiveServerId(servers[0].data_id);
+    }
+
+    // Default: use the first sorted server (HD-1)
+    if (sortedAll.length > 0) {
+      setActiveServerId(sortedAll[0].data_id);
     }
   }, [servers, setActiveServerId]);
 
