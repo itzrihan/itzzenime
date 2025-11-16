@@ -15,61 +15,41 @@ function Servers({
   setActiveServerId,
   serverLoading,
 }) {
-  // Sort function for HD preference
+  // Sort function to put HD-2 before HD-1
   const sortByHdPreference = (a, b) => {
-    const order = ["HD-1", "Fast", "HD-2", "HD-3"];
-    const aIndex = order.findIndex((o) => a.serverName?.includes(o));
-    const bIndex = order.findIndex((o) => b.serverName?.includes(o));
-    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+    if (a.serverName?.includes("HD-2") && b.serverName?.includes("HD-1"))
+      return -1;
+    if (a.serverName?.includes("HD-1") && b.serverName?.includes("HD-2"))
+      return 1;
+    return 0;
   };
 
-  // Move Server 2 to the first position
-  const prioritizeServer2 = (serversArray) => {
-    if (!serversArray) return [];
-    const server2Index = serversArray.findIndex((s) =>
-      s.serverName?.includes("Server 2")
-    );
-    if (server2Index > -1) {
-      const [server2] = serversArray.splice(server2Index, 1);
-      serversArray.unshift(server2);
-    }
-    return serversArray;
-  };
-
-  const subServers = prioritizeServer2(
-    servers?.filter((s) => s.type === "sub").sort(sortByHdPreference) || []
-  );
-  const dubServers = prioritizeServer2(
-    servers?.filter((s) => s.type === "dub").sort(sortByHdPreference) || []
-  );
-  const rawServers = prioritizeServer2(
-    servers?.filter((s) => s.type === "raw").sort(sortByHdPreference) || []
-  );
+  const subServers =
+    servers?.filter((server) => server.type === "sub").sort(sortByHdPreference) ||
+    [];
+  const dubServers =
+    servers?.filter((server) => server.type === "dub").sort(sortByHdPreference) ||
+    [];
+  const rawServers =
+    servers?.filter((server) => server.type === "raw").sort(sortByHdPreference) ||
+    [];
 
   useEffect(() => {
-    if (!servers || servers.length === 0) return;
-
-    // Always pick Server 2 first for new users
     const savedServerName = localStorage.getItem("server_name");
+
     if (savedServerName) {
-      const matchingServer = servers.find(
+      const matchingServer = servers?.find(
         (server) => server.serverName === savedServerName
       );
+
       if (matchingServer) {
         setActiveServerId(matchingServer.data_id);
-        return;
+      } else if (servers && servers.length > 0) {
+        setActiveServerId(servers[0].data_id);
       }
+    } else if (servers && servers.length > 0) {
+      setActiveServerId(servers[0].data_id);
     }
-
-    // Pick Server 2 if exists
-    const server2 = servers.find((s) => s.serverName?.includes("Server 2"));
-    if (server2) {
-      setActiveServerId(server2.data_id);
-      return;
-    }
-
-    // Fallback: first sorted server
-    setActiveServerId(servers[0].data_id);
   }, [servers, setActiveServerId]);
 
   const handleServerSelect = (server) => {
@@ -98,7 +78,6 @@ function Servers({
               beside.
             </p>
           </div>
-
           <div className="bg-[#201F31] flex flex-col max-[600px]:h-full">
             {rawServers.length > 0 && (
               <div
@@ -134,7 +113,6 @@ function Servers({
                 </div>
               </div>
             )}
-
             {subServers.length > 0 && (
               <div
                 className={`servers px-2 flex items-center flex-wrap ml-2 max-[600px]:py-2 ${
@@ -167,7 +145,6 @@ function Servers({
                 </div>
               </div>
             )}
-
             {dubServers.length > 0 && (
               <div
                 className={`servers px-2 flex items-center flex-wrap ml-2 max-[600px]:py-2 ${
