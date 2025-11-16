@@ -15,7 +15,7 @@ function Servers({
   setActiveServerId,
   serverLoading,
 }) {
-  // Custom sort function: HD-1 first, then Fast, then HD-2, HD-3 etc.
+  // Sort function for HD preference
   const sortByHdPreference = (a, b) => {
     const order = ["HD-1", "Fast", "HD-2", "HD-3"];
     const aIndex = order.findIndex((o) => a.serverName?.includes(o));
@@ -23,46 +23,53 @@ function Servers({
     return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
   };
 
-  // Filter and sort servers by type
-  const subServers =
-    servers?.filter((server) => server.type === "sub").sort(sortByHdPreference) ||
-    [];
-  const dubServers =
-    servers?.filter((server) => server.type === "dub").sort(sortByHdPreference) ||
-    [];
-  const rawServers =
-    servers?.filter((server) => server.type === "raw").sort(sortByHdPreference) ||
-    [];
+  // Move Server 2 to the first position
+  const prioritizeServer2 = (serversArray) => {
+    if (!serversArray) return [];
+    const server2Index = serversArray.findIndex((s) =>
+      s.serverName?.includes("Server 2")
+    );
+    if (server2Index > -1) {
+      const [server2] = serversArray.splice(server2Index, 1);
+      serversArray.unshift(server2);
+    }
+    return serversArray;
+  };
+
+  const subServers = prioritizeServer2(
+    servers?.filter((s) => s.type === "sub").sort(sortByHdPreference) || []
+  );
+  const dubServers = prioritizeServer2(
+    servers?.filter((s) => s.type === "dub").sort(sortByHdPreference) || []
+  );
+  const rawServers = prioritizeServer2(
+    servers?.filter((s) => s.type === "raw").sort(sortByHdPreference) || []
+  );
 
   useEffect(() => {
-    const savedServerName = localStorage.getItem("server_name");
+    if (!servers || servers.length === 0) return;
 
-    if (savedServerName && servers) {
+    // Always pick Server 2 first for new users
+    const savedServerName = localStorage.getItem("server_name");
+    if (savedServerName) {
       const matchingServer = servers.find(
         (server) => server.serverName === savedServerName
       );
-
       if (matchingServer) {
         setActiveServerId(matchingServer.data_id);
         return;
       }
     }
 
-    if (servers && servers.length > 0) {
-      // Step 1: try to find Server 2
-      const server2 = servers.find((server) =>
-        server.serverName?.includes("Server 2")
-      );
-
-      if (server2) {
-        setActiveServerId(server2.data_id);
-        return;
-      }
-
-      // Step 2: fallback to first sorted server (HD-1 first)
-      const sortedAll = [...servers].sort(sortByHdPreference);
-      setActiveServerId(sortedAll[0].data_id);
+    // Pick Server 2 if exists
+    const server2 = servers.find((s) => s.serverName?.includes("Server 2"));
+    if (server2) {
+      setActiveServerId(server2.data_id);
+      return;
     }
+
+    // Fallback: first sorted server
+    setActiveServerId(servers[0].data_id);
   }, [servers, setActiveServerId]);
 
   const handleServerSelect = (server) => {
@@ -91,6 +98,7 @@ function Servers({
               beside.
             </p>
           </div>
+
           <div className="bg-[#201F31] flex flex-col max-[600px]:h-full">
             {rawServers.length > 0 && (
               <div
@@ -126,6 +134,7 @@ function Servers({
                 </div>
               </div>
             )}
+
             {subServers.length > 0 && (
               <div
                 className={`servers px-2 flex items-center flex-wrap ml-2 max-[600px]:py-2 ${
@@ -158,6 +167,7 @@ function Servers({
                 </div>
               </div>
             )}
+
             {dubServers.length > 0 && (
               <div
                 className={`servers px-2 flex items-center flex-wrap ml-2 max-[600px]:py-2 ${
